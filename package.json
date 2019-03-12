@@ -1,7 +1,11 @@
 {
-  "name": "my-razzle-app",
-  "version": "2.0.0-alpha.2",
+  "name": "circl-dashboard",
+  "version": "0.0.1",
   "license": "MIT",
+  "engines": {
+    "node": "10.15.3",
+    "npm": "6.4.1"
+  },
   "scripts": {
     "start": "razzle start",
     "build": "razzle build",
