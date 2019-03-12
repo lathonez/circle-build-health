@@ -4,8 +4,6 @@ import { StaticRouter } from "react-router-dom";
 import express from "express";
 import cookieParser from "cookie-parser";
 import session from "express-session";
-import maybeEnsureLoggedIn from "./maybeEnsureLoggedIn";
-import useAuth0 from "./useAuth0";
 import CircleCI from "circleci";
 
 import bodyParser from "body-parser";
@@ -15,13 +13,30 @@ import { ApolloProvider, renderToStringWithData } from "react-apollo";
 import { ApolloClient } from "apollo-client";
 import { SchemaLink } from "apollo-link-schema";
 import { InMemoryCache } from "apollo-cache-inmemory";
-import maybeLoadAuthMiddleware from './maybeLoadAuthMiddlware';
+import passport from 'passport';
+import auth from 'http-auth';
 
-const ORGANIZATION_NAME = process.env.RAZZLE_CIRCLE_ORG_NAME;
+const ORGANIZATION_NAME = process.env.CIRCLE_ORG_NAME;
 
 const circleClient = new CircleCI({
-  auth: process.env.RAZZLE_CIRCLE_CI_TOKEN
+  auth: process.env.CIRCLE_CI_TOKEN
 });
+
+const basic = auth.basic({
+  realm: 'Circle Dash'
+}, (username, password, callback) => {
+  callback(username === process.env.HTTP_AUTH_USERNAME && password === process.env.HTTP_AUTH_PASSWORD);
+});
+
+basic.on('fail', (result, req) => {
+  console.log(`User authentication failed: ${result.user}`);
+});
+
+basic.on('error', (error, req) => {
+  console.log(`Authentication error: ${error.code + " - " + error.message}`);
+});
+
+passport.use(auth.passport(basic));
 
 const typeDefs = `
   type Query {
@@ -127,16 +142,14 @@ server = server
   );
 
 (async function() {
-  server = await maybeLoadAuthMiddleware(server);
   server = server
     .use(express.static(process.env.RAZZLE_PUBLIC_DIR))
     .use(
       "/graphql",
-      maybeEnsureLoggedIn(useAuth0()),
       bodyParser.json(),
       graphqlExpress({ schema })
     )
-    .get("/", maybeEnsureLoggedIn(useAuth0()), async (req, res) => {
+    .get("/", passport.authenticate('http', {session: false}), async (req, res) => {
       const context = {};
       const app = (
         <ApolloProvider client={client}>
