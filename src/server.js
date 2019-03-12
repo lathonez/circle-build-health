@@ -17,7 +17,7 @@ import { SchemaLink } from "apollo-link-schema";
 import { InMemoryCache } from "apollo-cache-inmemory";
 import maybeLoadAuthMiddleware from './maybeLoadAuthMiddlware';
 
-const APTO_ORGANIZATION_NAME = "aptotude";
+const ORGANIZATION_NAME = process.env.RAZZLE_CIRCLE_ORG_NAME;
 
 const circleClient = new CircleCI({
   auth: process.env.RAZZLE_CIRCLE_CI_TOKEN
@@ -49,7 +49,7 @@ const resolvers = {
       try {
         const builds = await circleClient.getBranchBuilds({
           limit: 1,
-          username: "aptotude",
+          username: ORGANIZATION_NAME,
           project: name,
           branch
         });
@@ -64,11 +64,11 @@ const resolvers = {
       try {
         const allProjects = await circleClient.getProjects();
 
-        const aptoProjects = allProjects.filter(
-          project => project.username === APTO_ORGANIZATION_NAME
+        const projects = allProjects.filter(
+          project => project.username === ORGANIZATION_NAME
         );
 
-        return aptoProjects;
+        return projects;
       } catch (ex) {
         console.error(ex.message);
         throw ex;
@@ -158,7 +158,7 @@ server = server
           <meta http-equiv="X-UA-Compatible" content="IE=edge" />
           <meta charset="utf-8" />
           <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
-          <title>Apto CircleCI Build Health</title>
+          <title>CircleCI Build Health</title>
           <meta name="viewport" content="width=device-width, initial-scale=1">
           ${
             assets.client.css
