@@ -15,6 +15,7 @@ import { SchemaLink } from "apollo-link-schema";
 import { InMemoryCache } from "apollo-cache-inmemory";
 import passport from 'passport';
 import auth from 'http-auth';
+const enforce = require('express-sslify');
 
 const ORGANIZATION_NAME = process.env.CIRCLE_ORG_NAME;
 
@@ -143,6 +144,7 @@ server = server
 
 (async function() {
   server = server
+    .use(enforce.HTTPS({ trustProtoHeader: true }))
     .use(express.static(process.env.RAZZLE_PUBLIC_DIR))
     .use(
       "/graphql",
